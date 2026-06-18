@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { checkInAction } from "@/app/actions";
+import { checkInAction, startFocusAction, endFocusAction } from "@/app/actions";
 import { playSound } from "@/lib/sound";
 
 type Season = { id: string; title: string };
@@ -54,6 +54,10 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
   const [remaining, setRemaining] = useState(25 * 60);
   const [done, setDone] = useState(false);
 
+  // co-focus session (notifies a partner you're focusing)
+  const focusIdRef = useRef<string | null>(null);
+  const [focusSeasonId, setFocusSeasonId] = useState(seasons[0]?.id ?? "");
+
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -68,6 +72,7 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
             setDone(true);
             beep();
             playSound("achievement");
+            stopFocus();
             return 0;
           }
           return r - 1;
@@ -83,6 +88,23 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
   const display = mode === "stopwatch" ? swElapsed : remaining;
   const progress = mode === "timer" && total > 0 ? 1 - remaining / total : 0;
 
+  async function startFocus() {
+    if (focusIdRef.current) return;
+    const mins = mode === "timer" ? Math.max(1, Math.round(remaining / 60)) : 30;
+    focusIdRef.current = await startFocusAction(focusSeasonId || null, mins);
+  }
+  function stopFocus() {
+    if (focusIdRef.current) {
+      endFocusAction(focusIdRef.current);
+      focusIdRef.current = null;
+    }
+  }
+  async function toggleRun() {
+    const next = !running;
+    setRunning(next);
+    if (next) await startFocus();
+  }
+
   function applyPreset(min: number) {
     setRunning(false);
     setDone(false);
@@ -92,6 +114,7 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
   function resetAll() {
     setRunning(false);
     setDone(false);
+    stopFocus();
     if (mode === "stopwatch") setSwElapsed(0);
     else setRemaining(total);
   }
@@ -155,8 +178,24 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
 
         {done && <p className="mb-4 font-semibold" style={{ color: "var(--accent-2)" }}>Session complete — nice work. 🎉</p>}
 
+        {seasons.length > 0 && (
+          <div className="mb-4 flex items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
+            <span>Co-focus:</span>
+            <select
+              value={focusSeasonId}
+              onChange={(e) => setFocusSeasonId(e.target.value)}
+              className="input w-auto py-1.5 text-sm"
+            >
+              <option value="">solo</option>
+              {seasons.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex gap-3">
-          <button onClick={() => setRunning((r) => !r)} className="btn btn-primary" disabled={mode === "timer" && remaining === 0}>
+          <button onClick={toggleRun} className="btn btn-primary" disabled={mode === "timer" && remaining === 0}>
             {running ? "Pause" : focusedSeconds > 0 ? "Resume" : "Start"}
           </button>
           <button onClick={resetAll} className="btn btn-ghost">Reset</button>

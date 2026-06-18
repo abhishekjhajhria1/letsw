@@ -5,6 +5,8 @@ import { dayKey, currentStreak } from "@/lib/dates";
 import { computeBadges } from "@/lib/badges";
 import RespondForm from "./RespondForm";
 import Mascot from "@/app/ui/Mascot";
+import NotifyToggle from "@/app/ui/NotifyToggle";
+import FocusPresence from "@/app/ui/FocusPresence";
 
 export default async function Dashboard() {
   const me = await requireUser();
@@ -45,6 +47,9 @@ export default async function Dashboard() {
             : "Pair up with someone and start a season."}
         </p>
       </div>
+
+      <NotifyToggle compact />
+      <FocusPresence />
 
       <section className="slide-up" style={{ animationDelay: "0.05s" }}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>

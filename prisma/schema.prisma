@@ -26,6 +26,12 @@ model User {
   longestStreak  Int     @default(0)
   lastCheckInDay String?
 
+  // daily reminder
+  reminderEnabled Boolean @default(false)
+  reminderTime    String? // HH:MM
+  reminderTz      String?
+  lastRemindedDay String?
+
   // who invited me (lineage / invite tree)
   invitedById  String?
   invitedBy    User?    @relation("Invites", fields: [invitedById], references: [id])
@@ -40,6 +46,11 @@ model User {
 
   checkIns       CheckIn[] @relation("CheckInAuthor")
   verifiedChecks CheckIn[] @relation("CheckInVerifier")
+
+  pushSubs      PushSubscription[]
+  notifications Notification[]
+  focusSessions FocusSession[]
+  intentions    DailyIntention[]
 
   // leaderboard ordering
   @@index([checkInCount])
@@ -87,7 +98,9 @@ model PartnerSeason {
   endsAt     DateTime?
   createdAt  DateTime @default(now())
 
-  checkIns   CheckIn[]
+  checkIns      CheckIn[]
+  focusSessions FocusSession[]
+  intentions    DailyIntention[]
 }
 
 model CheckIn {
@@ -108,4 +121,59 @@ model CheckIn {
   verifiedAt   DateTime?
 
   @@unique([seasonId, authorId, day])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String   @default("")
+  url       String   @default("/app")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+model FocusSession {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId  String?
+  season    PartnerSeason? @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  startedAt DateTime      @default(now())
+  endsAt    DateTime
+  endedAt   DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([userId])
+  @@index([seasonId])
+}
+
+model DailyIntention {
+  id        String        @id @default(cuid())
+  seasonId  String
+  season    PartnerSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day       String
+  text      String
+  createdAt DateTime      @default(now())
+
+  @@unique([seasonId, userId, day])
 }

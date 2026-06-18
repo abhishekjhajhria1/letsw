@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import FocusTimer from "./FocusTimer";
+import FocusSounds from "./FocusSounds";
+import FocusPresence from "@/app/ui/FocusPresence";
 
 export default async function TimerPage() {
   const me = await requireUser();
@@ -19,7 +21,9 @@ export default async function TimerPage() {
           Run a timer or stopwatch, then log the session straight to a partner.
         </p>
       </div>
+      <FocusPresence />
       <FocusTimer seasons={seasons} />
+      <FocusSounds />
     </div>
   );
 }

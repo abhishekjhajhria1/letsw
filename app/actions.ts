@@ -13,6 +13,7 @@ import {
   getCurrentUser,
 } from "@/lib/auth";
 import { dayKey, addDays } from "@/lib/dates";
+import { notify } from "@/lib/notify";
 
 type State = { error?: string } | undefined;
 
@@ -119,7 +120,7 @@ export async function createPartnershipAction(_prev: State, form: FormData): Pro
   const partner = await prisma.user.findUnique({ where: { username: partnerName } });
   if (!partner) return { error: `No member named "${partnerName}".` };
 
-  await prisma.partnerSeason.create({
+  const season = await prisma.partnerSeason.create({
     data: {
       title,
       category,
@@ -129,6 +130,12 @@ export async function createPartnershipAction(_prev: State, form: FormData): Pro
       inviteeId: partner.id,
       status: "pending",
     },
+  });
+  await notify(partner.id, {
+    type: "invited",
+    title: `@${me.username} invited you to a season`,
+    body: `"${title}" — accept to start.`,
+    url: "/app",
   });
   redirect("/app");
 }
@@ -153,6 +160,12 @@ export async function respondPartnershipAction(form: FormData) {
         startedAt,
         endsAt: addDays(startedAt, season.lengthDays),
       },
+    });
+    await notify(season.inviterId, {
+      type: "accepted",
+      title: `@${me.username} accepted your season`,
+      body: `"${season.title}" is live. First check-in today.`,
+      url: `/app/p/${id}`,
     });
   } else {
     await prisma.partnerSeason.update({ where: { id }, data: { status: "declined" } });
@@ -197,6 +210,14 @@ export async function checkInAction(form: FormData) {
       data.lastCheckInDay = today;
     }
     await prisma.user.update({ where: { id: me.id }, data });
+
+    const partnerId = season.inviterId === me.id ? season.inviteeId : season.inviterId;
+    await notify(partnerId, {
+      type: "checkin",
+      title: `@${me.username} completed today's check-in`,
+      body: note ? note.slice(0, 80) : "Verify it to keep the streak honest.",
+      url: `/app/p/${seasonId}`,
+    });
   }
   revalidatePath(`/app/p/${seasonId}`);
   revalidatePath("/app");
@@ -266,5 +287,139 @@ export async function verifyCheckInAction(form: FormData) {
     }),
     prisma.user.update({ where: { id: me.id }, data: { verifyCount: { increment: 1 } } }),
   ]);
+  await notify(ci.authorId, {
+    type: "verified",
+    title: `@${me.username} verified your check-in 🎉`,
+    body: "That one counts.",
+    url: `/app/p/${ci.seasonId}`,
+  });
   revalidatePath(`/app/p/${ci.seasonId}`);
+}
+
+// ---- push subscriptions ----
+
+export async function savePushSubscriptionAction(sub: {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+}) {
+  const me = await getCurrentUser();
+  if (!me || !sub?.endpoint) return;
+  await prisma.pushSubscription.upsert({
+    where: { endpoint: sub.endpoint },
+    update: { userId: me.id, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+    create: { userId: me.id, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+  });
+}
+
+// ---- notification feed ----
+
+export async function markNotificationsReadAction() {
+  const me = await getCurrentUser();
+  if (!me) return;
+  await prisma.notification.updateMany({
+    where: { userId: me.id, read: false },
+    data: { read: true },
+  });
+  revalidatePath("/app/inbox");
+  revalidatePath("/app");
+}
+
+// ---- nudge ----
+
+export async function nudgeAction(form: FormData) {
+  const me = await getCurrentUser();
+  if (!me) redirect("/login");
+  const seasonId = String(form.get("seasonId") || "");
+  const season = await prisma.partnerSeason.findUnique({ where: { id: seasonId } });
+  if (!season || season.status !== "active") return;
+  if (season.inviterId !== me.id && season.inviteeId !== me.id) return;
+  const partnerId = season.inviterId === me.id ? season.inviteeId : season.inviterId;
+
+  // soft cooldown: at most one nudge to this partner per 3h
+  const recent = await prisma.notification.findFirst({
+    where: { userId: partnerId, type: "nudge", createdAt: { gt: new Date(Date.now() - 3 * 3600e3) } },
+  });
+  if (recent) return;
+
+  await notify(partnerId, {
+    type: "nudge",
+    title: `@${me.username} nudged you 👀`,
+    body: `Don't break the streak on "${season.title}".`,
+    url: `/app/p/${seasonId}`,
+  });
+  revalidatePath(`/app/p/${seasonId}`);
+}
+
+// ---- co-focus sessions ----
+
+export async function startFocusAction(seasonId: string | null, minutes: number) {
+  const me = await getCurrentUser();
+  if (!me) return null;
+  const mins = Math.max(1, Math.min(180, Math.round(minutes || 25)));
+  const endsAt = new Date(Date.now() + mins * 60000);
+
+  let validSeasonId: string | null = null;
+  if (seasonId) {
+    const season = await prisma.partnerSeason.findUnique({ where: { id: seasonId } });
+    if (season && (season.inviterId === me.id || season.inviteeId === me.id)) {
+      validSeasonId = season.id;
+      const partnerId = season.inviterId === me.id ? season.inviteeId : season.inviterId;
+      await notify(partnerId, {
+        type: "focus",
+        title: `@${me.username} is focusing for ${mins} min`,
+        body: "Jump in and co-work — body doubling beats willpower.",
+        url: "/app/timer",
+      });
+    }
+  }
+
+  const fs = await prisma.focusSession.create({
+    data: { userId: me.id, seasonId: validSeasonId, endsAt },
+  });
+  return fs.id;
+}
+
+export async function endFocusAction(id: string) {
+  const me = await getCurrentUser();
+  if (!me || !id) return;
+  await prisma.focusSession.updateMany({
+    where: { id, userId: me.id, endedAt: null },
+    data: { endedAt: new Date() },
+  });
+}
+
+// ---- daily intention ----
+
+export async function setIntentionAction(form: FormData) {
+  const me = await getCurrentUser();
+  if (!me) redirect("/login");
+  const seasonId = String(form.get("seasonId") || "");
+  const text = String(form.get("text") || "").trim().slice(0, 200);
+  if (!text) return;
+  const season = await prisma.partnerSeason.findUnique({ where: { id: seasonId } });
+  if (!season || (season.inviterId !== me.id && season.inviteeId !== me.id)) return;
+
+  const day = dayKey();
+  await prisma.dailyIntention.upsert({
+    where: { seasonId_userId_day: { seasonId, userId: me.id, day } },
+    update: { text },
+    create: { seasonId, userId: me.id, day, text },
+  });
+  revalidatePath(`/app/p/${seasonId}`);
+  revalidatePath("/app");
+}
+
+// ---- reminders ----
+
+export async function saveReminderAction(form: FormData) {
+  const me = await getCurrentUser();
+  if (!me) redirect("/login");
+  const reminderEnabled = String(form.get("enabled") || "") === "on";
+  const reminderTime = String(form.get("time") || "").trim() || null;
+  const reminderTz = String(form.get("tz") || "").trim() || null;
+  await prisma.user.update({
+    where: { id: me.id },
+    data: { reminderEnabled, reminderTime, reminderTz },
+  });
+  revalidatePath("/app/settings");
 }

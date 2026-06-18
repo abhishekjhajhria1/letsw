@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { ChangePassword, DeleteAccount } from "./SettingsForms";
+import ReminderSettings from "./ReminderSettings";
+import NotifyToggle from "@/app/ui/NotifyToggle";
 
 export default async function SettingsPage() {
   const me = await requireUser();
@@ -12,6 +14,16 @@ export default async function SettingsPage() {
           @{me.username} · {me.email}
         </p>
       </div>
+
+      <section className="card">
+        <h2 className="mb-4 text-lg font-bold">Notifications</h2>
+        <NotifyToggle />
+      </section>
+
+      <section className="card">
+        <h2 className="mb-4 text-lg font-bold">Daily reminder</h2>
+        <ReminderSettings enabled={me.reminderEnabled} time={me.reminderTime ?? ""} />
+      </section>
 
       <section className="card">
         <h2 className="mb-4 text-lg font-bold">Change password</h2>

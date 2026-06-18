@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { logoutAction } from "@/app/actions";
 import Controls from "@/app/ui/Controls";
+import NotificationBell from "@/app/ui/NotificationBell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await getCurrentUser();
   if (!me) redirect("/login");
+
+  const unread = await prisma.notification.count({ where: { userId: me.id, read: false } });
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -24,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/app/settings" className="mx-1 hidden rounded-lg px-2 py-2 font-medium transition hover:bg-[var(--surface-2)] sm:inline" style={{ color: "var(--muted)" }}>
               @{me.username}
             </Link>
+            <NotificationBell initial={unread} />
             <Controls />
             <form action={logoutAction}>
               <button className="btn btn-ghost px-3 py-2 text-sm">Log out</button>

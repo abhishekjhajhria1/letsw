@@ -26,8 +26,12 @@ git commit -m "LWTS"
    npx prisma db push
    node prisma/seed.mjs
    ```
-3. Add one more env var in Vercel → **Settings → Environment Variables**:
+3. Add the remaining env vars in Vercel → **Settings → Environment Variables**:
    - `SESSION_SECRET` = a long random string
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (mailto:you@…) — generate with
+     `npx web-push generate-vapid-keys`
+   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = same value as `VAPID_PUBLIC_KEY`
+   - `CRON_SECRET` = a random string (protects the reminder endpoint)
 4. **Redeploy** (Deployments tab → ⋯ → Redeploy).
 
 ## 4. Connect lwts.site
@@ -36,6 +40,15 @@ to add at your registrar (or, if you put the domain on Cloudflare first, add it 
 SSL is automatic.
 
 Done — https://lwts.site. Sign up with `11xwillwin`.
+
+## 5. Daily reminders (external cron — free)
+The app exposes `GET /api/cron/reminders` (sends a push to anyone whose chosen reminder time
+has arrived). Trigger it every ~15 min from a free scheduler — Vercel Hobby cron only fires
+once/day, so use **cron-job.org** (or a GitHub Actions schedule):
+- URL: `https://lwts.site/api/cron/reminders`
+- Header: `Authorization: Bearer <CRON_SECRET>`  (or append `?secret=<CRON_SECRET>`)
+
+Skip this if you don't want scheduled reminders — every other notification works without it.
 
 ## Local dev
 Put your Neon connection strings in `.env` (see `.env.example`) and run:

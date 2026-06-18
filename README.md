@@ -34,6 +34,13 @@ Sign up with the code `11xwillwin`. After that, members generate their own codes
   pages stay cheap. Run `npm run db:backfill` once if you change how those are computed.
 - It's a PWA (installable, works offline-ish via `public/sw.js`).
 - Light/dark theme, sound effects, all client-side.
+- **Notifications:** Web Push (VAPID) + an in-app feed/bell. Partners get pinged on
+  check-in, verify, invite/accept, nudge, focus-session-started, and daily reminders.
+  Needs the `VAPID_*` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` env vars (see `.env.example`).
+- **Focus tools** (on `/app/timer`): co-focus/body-doubling sessions with live partner
+  presence, synthesized white/brown/rain sounds, and per-season daily intentions.
+- **Reminders:** `GET /api/cron/reminders` (protected by `CRON_SECRET`) — drive it from a
+  free external cron every ~15 min. See `DEPLOY.md`.
 
 ## Deploying
 See `DEPLOY.md` — Vercel + Neon, set up from the browser. Set a real `SESSION_SECRET`

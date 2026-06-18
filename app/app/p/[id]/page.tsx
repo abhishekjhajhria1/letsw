@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dayKey, currentStreak } from "@/lib/dates";
-import { verifyCheckInAction } from "@/app/actions";
+import { verifyCheckInAction, nudgeAction } from "@/app/actions";
 import CheckInForm from "./CheckInForm";
+import IntentionForm from "./IntentionForm";
 import SoundButton from "@/app/ui/SoundButton";
+import FocusPresence from "@/app/ui/FocusPresence";
 
 export default async function SeasonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,6 +35,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
   const partnerStreak = currentStreak(partnerDays);
   const myToday = s.checkIns.find((c) => c.authorId === me.id && c.day === today);
 
+  const intentions = await prisma.dailyIntention.findMany({ where: { seasonId: id, day: today } });
+  const myIntention = intentions.find((i) => i.userId === me.id);
+  const partnerIntention = intentions.find((i) => i.userId === partner.id);
+
   const daysLeft = s.endsAt
     ? Math.max(0, Math.ceil((s.endsAt.getTime() - Date.now()) / 864e5))
     : s.lengthDays;
@@ -58,6 +64,8 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {s.status === "active" && <FocusPresence seasonId={s.id} />}
+
       {/* The two commitments */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card" style={{ borderColor: "var(--accent)" }}>
@@ -66,6 +74,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
             <span className="chip" style={{ color: "var(--accent-2)" }}>🔥 {myStreak}d</span>
           </div>
           <p className="mt-2 text-sm">{myGoal}</p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+            Today&apos;s intention
+          </p>
+          <IntentionForm seasonId={s.id} current={myIntention?.text ?? ""} />
         </div>
         <div className="card">
           <div className="flex items-center justify-between">
@@ -73,6 +85,20 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
             <span className="chip" style={{ color: "var(--accent-2)" }}>🔥 {partnerStreak}d</span>
           </div>
           <p className="mt-2 text-sm">{partnerGoal || "—"}</p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+            Today&apos;s intention
+          </p>
+          <p className="mt-1 text-sm">
+            {partnerIntention?.text || <span style={{ color: "var(--muted)" }}>not set yet</span>}
+          </p>
+          {s.status === "active" && (
+            <form action={nudgeAction} className="mt-3">
+              <input type="hidden" name="seasonId" value={s.id} />
+              <SoundButton sound="pop" className="btn btn-ghost px-3 py-2 text-sm">
+                👀 Nudge @{partner.username}
+              </SoundButton>
+            </form>
+          )}
         </div>
       </div>
 

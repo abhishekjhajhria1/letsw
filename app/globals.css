@@ -1,26 +1,189 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------- Theme tokens (light is default, dark overrides) ---------- */
+:root,
+[data-theme="light"] {
+  --background: #f5efe2;
+  --surface: #ffffff;
+  --surface-2: #f3ecdc;
+  --border: #161325;
+  --foreground: #161325;
+  --muted: #6c6580;
+  --accent: #5b34ef;     /* electric indigo */
+  --accent-2: #f5a201;   /* trophy gold — the "win" color */
+  --accent-3: #14c8a6;   /* mint */
+  --danger: #e23a5e;
+  --ink: #161325;        /* hard-shadow color */
+  --shadow: 4px 4px 0 var(--ink);
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --grid: rgba(22, 19, 37, 0.04);
+}
+
+[data-theme="dark"] {
+  --background: #0e0b1c;
+  --surface: #181430;
+  --surface-2: #221c40;
+  --border: #000000;
+  --foreground: #f4f1ff;
+  --muted: #a59ec4;
+  --accent: #8b6bff;
+  --accent-2: #ffc24b;
+  --accent-3: #28e0b0;
+  --danger: #ff5d7a;
+  --ink: #000000;
+  --shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  --shadow-sm: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  --grid: rgba(255, 255, 255, 0.03);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(900px 500px at 88% -8%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%),
+    radial-gradient(700px 420px at -8% 8%, color-mix(in oklab, var(--accent-3) 18%, transparent), transparent 55%),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px, 28px 28px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Components ---------- */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: 1.5px solid var(--ink);
+    box-shadow: var(--shadow);
+  }
+  .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .btn-primary:active { transform: translate(2px, 2px); box-shadow: var(--shadow-sm); }
+  .btn-ghost {
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--foreground);
+  }
+  .btn-ghost:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+  .btn-ghost:active { transform: translate(0, 0); box-shadow: none; }
+
+  .card {
+    @apply rounded-2xl p-6;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .card-flat { @apply rounded-2xl p-6; background: var(--surface); border: 1.5px solid var(--border); }
+  .card-hover { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .card-hover:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0 var(--ink); }
+
+  .input {
+    @apply w-full rounded-xl px-4 py-3 outline-none transition;
+    background: var(--surface-2);
+    color: var(--foreground);
+    border: 1.5px solid var(--border);
+  }
+  .input:focus { box-shadow: var(--shadow-sm); transform: translate(-1px, -1px); }
+  .label { @apply mb-1.5 block text-sm font-semibold; color: var(--muted); }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+  }
+  .pill-mono {
+    @apply rounded-lg px-3 py-1.5 font-mono text-sm font-bold tracking-widest;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+  }
+}
+
+/* ---------- Animations ---------- */
+@keyframes pop-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-2deg); }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+@keyframes flame {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(1.12) translateY(-2px); }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spin-in {
+  0% { transform: rotate(-180deg) scale(0); opacity: 0; }
+  100% { transform: rotate(0) scale(1); opacity: 1; }
+}
+
+.pop-in { animation: pop-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.slide-up { animation: slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-wiggle:hover { animation: wiggle 0.5s ease-in-out; }
+.spin-in { animation: spin-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 25%, var(--accent-3) 50%, var(--accent) 75%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

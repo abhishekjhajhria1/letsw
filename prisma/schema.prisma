@@ -1,0 +1,111 @@
+// Datasource + generator
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  role         String   @default("member") // member | admin
+  createdAt    DateTime @default(now())
+
+  // cached counters, updated on write
+  checkInCount   Int     @default(0)
+  verifyCount    Int     @default(0)
+  crewCount      Int     @default(0) // direct invitees
+  streakCount    Int     @default(0)
+  longestStreak  Int     @default(0)
+  lastCheckInDay String?
+
+  // who invited me (lineage / invite tree)
+  invitedById  String?
+  invitedBy    User?    @relation("Invites", fields: [invitedById], references: [id])
+  invitees     User[]   @relation("Invites")
+
+  inviteCodes  InviteCode[] @relation("CodeOwner")
+  sessions     Session[]
+
+  // partnerships I started / was invited to
+  startedPartnerships PartnerSeason[] @relation("Inviter")
+  joinedPartnerships  PartnerSeason[] @relation("Invitee")
+
+  checkIns       CheckIn[] @relation("CheckInAuthor")
+  verifiedChecks CheckIn[] @relation("CheckInVerifier")
+
+  // leaderboard ordering
+  @@index([checkInCount])
+  @@index([invitedById])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model InviteCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  ownerId   String?  // null = seed/system code
+  owner     User?    @relation("CodeOwner", fields: [ownerId], references: [id])
+  maxUses   Int      @default(1)
+  uses      Int      @default(0)
+  disabled  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// two people committing to a season
+model PartnerSeason {
+  id         String   @id @default(cuid())
+  title      String   // shared season name, e.g. "June Discipline"
+  category   String   @default("general")
+  cadence    String   @default("daily") // daily | weekdays
+  lengthDays Int      @default(30)
+  status     String   @default("pending") // pending | active | ended | declined
+
+  inviterId   String
+  inviter     User    @relation("Inviter", fields: [inviterId], references: [id])
+  inviterGoal String
+
+  inviteeId   String
+  invitee     User    @relation("Invitee", fields: [inviteeId], references: [id])
+  inviteeGoal String  @default("")
+
+  startedAt  DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  checkIns   CheckIn[]
+}
+
+model CheckIn {
+  id        String   @id @default(cuid())
+  seasonId  String
+  season    PartnerSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User     @relation("CheckInAuthor", fields: [authorId], references: [id])
+
+  day       String   // YYYY-MM-DD (local day key)
+  note      String   @default("")
+  proof     String   @default("") // optional URL / metric text
+  createdAt DateTime @default(now())
+
+  verifiedById String?
+  verifiedBy   User?  @relation("CheckInVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  @@unique([seasonId, authorId, day])
+}

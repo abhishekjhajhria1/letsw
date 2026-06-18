@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma / local db
+/lib/generated
+*.db
+*.db-journal
+
+# local tooling
+.claude/
+
+# cloudflare / opennext build output
+.open-next/
+.wrangler/

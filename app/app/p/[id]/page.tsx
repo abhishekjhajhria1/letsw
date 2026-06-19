@@ -6,6 +6,7 @@ import { dayKey, currentStreak } from "@/lib/dates";
 import { verifyCheckInAction, nudgeAction } from "@/app/actions";
 import CheckInForm from "./CheckInForm";
 import IntentionForm from "./IntentionForm";
+import SeasonChat from "./SeasonChat";
 import SoundButton from "@/app/ui/SoundButton";
 import FocusPresence from "@/app/ui/FocusPresence";
 
@@ -65,6 +66,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
       </div>
 
       {s.status === "active" && <FocusPresence seasonId={s.id} />}
+
+      {s.status === "active" && (
+        <SeasonChat seasonId={s.id} meId={me.id} partnerName={partner.username} />
+      )}
 
       {/* The two commitments */}
       <div className="grid gap-4 md:grid-cols-2">

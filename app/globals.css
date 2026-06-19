@@ -64,6 +64,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   background-color: var(--background);
+  overflow-x: hidden;
   background-image:
     radial-gradient(900px 500px at 88% -8%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%),
     radial-gradient(700px 420px at -8% 8%, color-mix(in oklab, var(--accent-3) 18%, transparent), transparent 55%),

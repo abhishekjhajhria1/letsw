@@ -165,6 +165,21 @@ model FocusSession {
   @@index([seasonId])
 }
 
+// ephemeral in-session chat between the two partners.
+// intentionally NOT a long-term record: rows are auto-pruned (see the messages
+// route) and only the last couple hours are ever shown. No relations so it can
+// be dropped/pruned freely without touching the rest of the graph.
+model SeasonMessage {
+  id         String   @id @default(cuid())
+  seasonId   String
+  senderId   String
+  senderName String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([seasonId, createdAt])
+}
+
 model DailyIntention {
   id        String        @id @default(cuid())
   seasonId  String

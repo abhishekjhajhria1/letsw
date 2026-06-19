@@ -44,7 +44,7 @@ export default async function Dashboard() {
         <p className="mt-1" style={{ color: "var(--muted)" }}>
           {active.length
             ? "Your partners are counting on today's check-in."
-            : "Pair up with someone and start a season."}
+            : "Pair up with someone and start a session."}
         </p>
       </div>
 
@@ -98,10 +98,10 @@ export default async function Dashboard() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-            Active seasons
+            Active sessions
           </h2>
           <Link href="/app/partners" className="btn btn-primary px-4 py-2 text-sm">
-            + New season
+            + New session
           </Link>
         </div>
 
@@ -110,7 +110,7 @@ export default async function Dashboard() {
             <div className="flex justify-center">
               <Mascot size={120} className="animate-float" />
             </div>
-            <p className="mt-2 text-lg font-bold">No active seasons yet.</p>
+            <p className="mt-2 text-lg font-bold">No active sessions yet.</p>
             <p className="mx-auto mt-2 max-w-sm text-sm" style={{ color: "var(--muted)" }}>
               Accountability needs a witness. Invite a partner and commit to a goal together.
             </p>

@@ -41,7 +41,7 @@ export default async function Home() {
           on your <span className="shimmer-text">partner.</span>
         </h1>
         <p className="slide-up mx-auto mt-6 max-w-2xl text-lg" style={{ color: "var(--muted)", animationDelay: "0.1s" }}>
-          LWTS pairs you with one person for a season. You each set a goal — any
+          LWTS pairs you with one person for a session. You each set a goal — any
           field, any pace — and check in daily. They verify yours, you verify
           theirs. Streaks build. Excuses don&apos;t.
         </p>
@@ -62,7 +62,7 @@ export default async function Home() {
         <div className="mx-auto mt-14 grid max-w-3xl grid-cols-3 gap-4">
           {[
             { value: members, label: "members in" },
-            { value: activeSeasons, label: "active seasons" },
+            { value: activeSeasons, label: "active sessions" },
             { value: checkIns, label: "check-ins logged" },
           ].map((s, i) => (
             <div key={s.label} className="pop-in" style={{ animationDelay: `${0.25 + i * 0.07}s` }}>
@@ -74,12 +74,12 @@ export default async function Home() {
 
       {/* How it works */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
-        <h2 className="mb-10 text-center text-3xl font-bold">How a season works</h2>
+        <h2 className="mb-10 text-center text-3xl font-bold">How a session works</h2>
         <div className="grid gap-5 md:grid-cols-4">
           <Step n="1" title="Get invited" body="A member hands you a code. You pick a username — no real names required." />
-          <Step n="2" title="Pair up" body="Invite one partner. You each declare a goal and a season length." />
+          <Step n="2" title="Pair up" body="Invite one partner. You each declare a goal and a session length." />
           <Step n="3" title="Check in daily" body="Log proof. Your partner confirms it. Miss a day and they'll know." />
-          <Step n="4" title="Keep the streak" body="Watch the streak climb. End the season, run a recap, go again." />
+          <Step n="4" title="Keep the streak" body="Watch the streak climb. End the session, run a recap, go again." />
         </div>
       </section>
 

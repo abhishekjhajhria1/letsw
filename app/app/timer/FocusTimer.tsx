@@ -226,7 +226,7 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
           </p>
           <input type="hidden" name="proof" value={`Focused ${fmt(focusedSeconds)} via timer`} />
           <div>
-            <label className="label">Season</label>
+            <label className="label">Session</label>
             <select name="seasonId" className="input" required>
               {seasons.map((s) => (
                 <option key={s.id} value={s.id}>{s.title}</option>
@@ -243,7 +243,7 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
         </form>
       ) : (
         <p className="text-center text-sm" style={{ color: "var(--muted)" }}>
-          Start an active season to log focus sessions as check-ins.
+          Start an active session to log your focus time as check-ins.
         </p>
       )}
     </div>

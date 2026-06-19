@@ -14,7 +14,7 @@ export default async function PartnersPage() {
   return (
     <div className="grid gap-8 md:grid-cols-2">
       <div>
-        <h1 className="text-2xl font-bold">Start a season</h1>
+        <h1 className="text-2xl font-bold">Start a session</h1>
         <p className="mt-1.5 text-sm" style={{ color: "var(--muted)" }}>
           Pick someone already on Lockstep. Don&apos;t know anyone yet? Send them
           an invite code from the Invites tab first.

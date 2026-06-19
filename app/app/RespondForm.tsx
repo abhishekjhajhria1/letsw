@@ -8,7 +8,7 @@ export default function RespondForm({ id }: { id: string }) {
     <form action={respondPartnershipAction} className="mt-4 space-y-3">
       <input type="hidden" name="id" value={id} />
       <div>
-        <label className="label">Your goal for this season</label>
+        <label className="label">Your goal for this session</label>
         <input name="goal" className="input" placeholder="e.g. Read 20 pages every day" />
       </div>
       <div className="flex gap-2">

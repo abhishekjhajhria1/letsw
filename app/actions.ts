@@ -114,7 +114,7 @@ export async function createPartnershipAction(_prev: State, form: FormData): Pro
 
   if (!partnerName) return { error: "Enter your partner's username." };
   if (partnerName === me.username) return { error: "You can't partner with yourself." };
-  if (!title) return { error: "Give your season a name." };
+  if (!title) return { error: "Give your session a name." };
   if (!myGoal) return { error: "Describe your goal." };
 
   const partner = await prisma.user.findUnique({ where: { username: partnerName } });
@@ -133,7 +133,7 @@ export async function createPartnershipAction(_prev: State, form: FormData): Pro
   });
   await notify(partner.id, {
     type: "invited",
-    title: `@${me.username} invited you to a season`,
+    title: `@${me.username} invited you to a session`,
     body: `"${title}" — accept to start.`,
     url: "/app",
   });
@@ -163,7 +163,7 @@ export async function respondPartnershipAction(form: FormData) {
     });
     await notify(season.inviterId, {
       type: "accepted",
-      title: `@${me.username} accepted your season`,
+      title: `@${me.username} accepted your session`,
       body: `"${season.title}" is live. First check-in today.`,
       url: `/app/p/${id}`,
     });

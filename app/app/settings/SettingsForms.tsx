@@ -32,7 +32,7 @@ export function DeleteAccount({ username }: { username: string }) {
   return (
     <form action={deleteAccountAction} className="space-y-3">
       <p className="text-sm" style={{ color: "var(--muted)" }}>
-        This permanently deletes your account, seasons, and check-ins. People you
+        This permanently deletes your account, sessions, and check-ins. People you
         invited stay, but leave your tree. Type <span className="pill-mono">{username}</span> to confirm.
       </p>
       <input name="confirm" className="input" placeholder={username} autoComplete="off" required />

@@ -11,7 +11,7 @@ const NAME_POOL = [
   "The Comeback",
   "Operation Discipline",
   "30 Days of Showing Up",
-  "Grind Season",
+  "Grind Mode",
   "Built Different",
   "Early Risers",
   "The Streak",
@@ -50,7 +50,7 @@ export default function NewSeasonForm() {
         <input id="partner" name="partner" className="input" placeholder="who's holding you accountable" required />
       </div>
       <div>
-        <label className="label" htmlFor="title">Season name</label>
+        <label className="label" htmlFor="title">Session name</label>
         <input
           id="title"
           name="title"

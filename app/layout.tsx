@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://lwts.site"),
   title: "LWTS — Let's Win. Together.",
   description:
-    "Invite-only accountability. Pair up, commit to a season, and track each other's progress. You don't quit on your partner.",
+    "Invite-only accountability. Pair up, commit to a session, and track each other's progress. You don't quit on your partner.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "LWTS", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },

@@ -17,8 +17,8 @@ export default function CopyCode({ code, used }: { code: string; used: boolean }
 
   async function share() {
     const data = {
-      title: "Join me on Lockstep",
-      text: `Here's your invite to Lockstep — code ${code}. Let's keep each other accountable.`,
+      title: "Join me on LWTS",
+      text: `Here's your invite to LWTS — code ${code}. Let's keep each other accountable.`,
       url: link,
     };
     if (navigator.share) {

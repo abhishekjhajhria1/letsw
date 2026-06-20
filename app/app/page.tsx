@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dayKey, currentStreak } from "@/lib/dates";
+import { isOnline } from "@/lib/presence";
 import { computeBadges } from "@/lib/badges";
+import OnlineDot from "@/app/ui/OnlineDot";
 import RespondForm from "./RespondForm";
 import Mascot from "@/app/ui/Mascot";
 import NotifyToggle from "@/app/ui/NotifyToggle";
@@ -60,7 +62,7 @@ export default async function Dashboard() {
             <span
               key={b.key}
               title={b.desc}
-              className={`chip animate-wiggle pop-in ${b.earned ? "" : ""}`}
+              className="chip animate-wiggle pop-in"
               style={
                 b.earned
                   ? { color: "var(--foreground)", borderColor: "var(--accent)", animationDelay: `${i * 0.04}s` }
@@ -138,7 +140,8 @@ export default async function Dashboard() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-bold">{s.title}</h3>
-                      <p className="text-sm" style={{ color: "var(--muted)" }}>
+                      <p className="flex items-center gap-1.5 text-sm" style={{ color: "var(--muted)" }}>
+                        <OnlineDot online={isOnline(partner.lastSeenAt)} size={8} />
                         with @{partner.username}
                       </p>
                     </div>

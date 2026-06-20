@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Patrick_Hand, Caveat } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const display = Space_Grotesk({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"] });
+// Hand-drawn sketch fonts — used only in the light ("paper") theme.
+const sketch = Patrick_Hand({ variable: "--font-sketch", subsets: ["latin"], weight: "400" });
+const sketchDisplay = Caveat({ variable: "--font-sketch-display", subsets: ["latin"], weight: ["500", "600", "700"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lwts.site"),
@@ -38,7 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${sketch.variable} ${sketchDisplay.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />

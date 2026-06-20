@@ -28,6 +28,7 @@ export const getLeaderboard = unstable_cache(
         streakCount: true,
         longestStreak: true,
         lastCheckInDay: true,
+        lastSeenAt: true,
         crewCount: true,
       },
     });

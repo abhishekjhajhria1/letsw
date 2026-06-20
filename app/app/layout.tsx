@@ -6,6 +6,7 @@ import { logoutAction } from "@/app/actions";
 import Controls from "@/app/ui/Controls";
 import NotificationBell from "@/app/ui/NotificationBell";
 import BottomNav from "@/app/ui/BottomNav";
+import Heartbeat from "@/app/ui/Heartbeat";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await getCurrentUser();
@@ -42,6 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 pb-24 sm:px-6 md:pb-8">{children}</main>
       <BottomNav />
+      <Heartbeat />
     </div>
   );
 }

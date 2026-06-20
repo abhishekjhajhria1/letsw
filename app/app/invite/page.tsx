@@ -21,7 +21,7 @@ export default async function InvitePage() {
     <div className="mx-auto max-w-2xl">
       <h1 className="text-2xl font-bold">Bring your people in</h1>
       <p className="mt-1.5 text-sm" style={{ color: "var(--muted)" }}>
-        Lockstep grows by invitation only. Each code lets one person in — and they
+        LWTS grows by invitation only. Each code lets one person in — and they
         join your tree.
       </p>
 

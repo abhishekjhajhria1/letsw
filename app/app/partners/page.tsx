@@ -1,26 +1,30 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getConnections } from "@/lib/connections";
 import NewSeasonForm from "./NewSeasonForm";
 
 export default async function PartnersPage() {
   const me = await requireUser();
 
-  const sent = await prisma.partnerSeason.findMany({
-    where: { inviterId: me.id, status: { in: ["pending", "declined"] } },
-    include: { invitee: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [sent, connections] = await Promise.all([
+    prisma.partnerSeason.findMany({
+      where: { inviterId: me.id, status: { in: ["pending", "declined"] } },
+      include: { invitee: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    getConnections(me.id, me.invitedById),
+  ]);
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
       <div>
         <h1 className="text-2xl font-bold">Start a session</h1>
         <p className="mt-1.5 text-sm" style={{ color: "var(--muted)" }}>
-          Pick someone already on Lockstep. Don&apos;t know anyone yet? Send them
+          Pick someone already on LWTS. Don&apos;t know anyone yet? Send them
           an invite code from the Invites tab first.
         </p>
         <div className="card mt-5">
-          <NewSeasonForm />
+          <NewSeasonForm connections={connections} />
         </div>
       </div>
 

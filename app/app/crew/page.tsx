@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getLeaderboard } from "@/lib/stats";
 import { liveStreak } from "@/lib/dates";
+import { isOnline } from "@/lib/presence";
+import OnlineDot from "@/app/ui/OnlineDot";
 
 export default async function CrewPage() {
   const me = await requireUser();
@@ -20,6 +22,7 @@ export default async function CrewPage() {
         checkInCount: true,
         streakCount: true,
         lastCheckInDay: true,
+        lastSeenAt: true,
         crewCount: true,
       },
     }),
@@ -58,7 +61,10 @@ export default async function CrewPage() {
             {myCrew.map((r) => (
               <div key={r.id} className="card">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">@{r.username}</span>
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <OnlineDot online={isOnline(r.lastSeenAt)} size={8} />
+                    @{r.username}
+                  </span>
                   <span className="chip" style={{ color: "var(--accent-2)" }}>
                     🔥 {liveStreak(r.streakCount, r.lastCheckInDay)}d
                   </span>
@@ -96,7 +102,10 @@ export default async function CrewPage() {
                   <tr key={r.id} className="border-t" style={mine ? { background: "rgba(124,92,255,0.12)" } : undefined}>
                     <td className="px-4 py-3 font-semibold">{medal(i)}</td>
                     <td className="px-4 py-3 font-medium">
-                      @{r.username} {mine && <span style={{ color: "var(--accent)" }}>· you</span>}
+                      <span className="inline-flex items-center gap-1.5">
+                        <OnlineDot online={isOnline(r.lastSeenAt)} size={8} />
+                        @{r.username} {mine && <span style={{ color: "var(--accent)" }}>· you</span>}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right" style={{ color: "var(--accent-2)" }}>
                       🔥 {liveStreak(r.streakCount, r.lastCheckInDay)}

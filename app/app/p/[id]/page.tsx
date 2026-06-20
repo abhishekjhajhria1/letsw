@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dayKey, currentStreak } from "@/lib/dates";
+import { isOnline } from "@/lib/presence";
 import { verifyCheckInAction, nudgeAction } from "@/app/actions";
+import OnlineDot from "@/app/ui/OnlineDot";
 import CheckInForm from "./CheckInForm";
 import IntentionForm from "./IntentionForm";
 import SeasonChat from "./SeasonChat";
@@ -86,7 +88,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="card">
           <div className="flex items-center justify-between">
-            <span className="font-semibold">@{partner.username}</span>
+            <span className="flex items-center gap-1.5 font-semibold">
+              <OnlineDot online={isOnline(partner.lastSeenAt)} size={8} />
+              @{partner.username}
+            </span>
             <span className="chip" style={{ color: "var(--accent-2)" }}>🔥 {partnerStreak}d</span>
           </div>
           <p className="mt-2 text-sm">{partnerGoal || "—"}</p>

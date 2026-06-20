@@ -18,6 +18,9 @@ model User {
   role         String   @default("member") // member | admin
   createdAt    DateTime @default(now())
 
+  // rough presence: bumped by a client heartbeat, read as "online if recent"
+  lastSeenAt   DateTime?
+
   // cached counters, updated on write
   checkInCount   Int     @default(0)
   verifyCount    Int     @default(0)

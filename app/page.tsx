@@ -74,7 +74,9 @@ export default async function Home() {
 
       {/* How it works */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
-        <h2 className="mb-10 text-center text-3xl font-bold">How a session works</h2>
+        <h2 className="mb-10 text-center text-3xl font-bold">
+          <span className="sketch-underline">How a session works</span>
+        </h2>
         <div className="grid gap-5 md:grid-cols-4">
           <Step n="1" title="Get invited" body="A member hands you a code. You pick a username — no real names required." />
           <Step n="2" title="Pair up" body="Invite one partner. You each declare a goal and a session length." />

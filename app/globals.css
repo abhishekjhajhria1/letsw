@@ -27,17 +27,17 @@
   --background: #0e0b1c;
   --surface: #181430;
   --surface-2: #221c40;
-  --border: #000000;
+  --border: #c4bee2;     /* chalk strokes on the board */
   --foreground: #f4f1ff;
   --muted: #a59ec4;
   --accent: #8b6bff;
   --accent-2: #ffc24b;
   --accent-3: #28e0b0;
   --danger: #ff5d7a;
-  --ink: #000000;
-  --shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
-  --shadow-sm: 2px 2px 0 rgba(0, 0, 0, 0.55);
-  --grid: rgba(255, 255, 255, 0.03);
+  --ink: #c4bee2;        /* chalk — outlines + hard "doodle" shadows */
+  --shadow: 4px 4px 0 rgba(196, 190, 226, 0.20);
+  --shadow-sm: 2px 2px 0 rgba(196, 190, 226, 0.20);
+  --grid: rgba(196, 190, 226, 0.06);   /* faint chalk grid */
 }
 
 @theme inline {
@@ -66,7 +66,8 @@ html {
 
 body {
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sketch), "Comic Sans MS", system-ui, sans-serif;
+  font-size: 1.05rem;
   background-color: var(--background);
   overflow-x: hidden;
   background-image:
@@ -79,8 +80,9 @@ body {
 }
 
 h1, h2, h3, .font-display {
-  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-sketch-display), var(--font-sketch), system-ui, sans-serif;
+  letter-spacing: 0;
+  font-weight: 700;
 }
 
 /* ---------- Components ---------- */
@@ -186,91 +188,65 @@ h1, h2, h3, .font-display {
 }
 
 /* ============================================================
-   Hand-drawn "sketchbook" theme — light mode only.
-   The dark theme keeps its clean neobrutalist look; in light
-   mode everything turns into pen-on-paper: handwriting type,
-   wobbly ink borders, and a notebook-grid background.
+   Hand-drawn "sketchbook" theme — BOTH modes.
+   Light = pen-on-paper (cream + graph grid).
+   Dark  = chalk-on-blackboard (slate + chalk grid).
+   Shared: handwriting type, wobbly ink/chalk borders, doodles.
    ============================================================ */
+
+/* light: warm notebook paper */
 [data-theme="light"] body {
-  /* notebook paper: warm cream + faint graph grid + soft corner wash */
   background-image:
     radial-gradient(800px 460px at 92% -10%, color-mix(in oklab, var(--accent-2) 12%, transparent), transparent 60%),
     radial-gradient(620px 380px at -8% 6%, color-mix(in oklab, var(--accent-3) 12%, transparent), transparent 58%),
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: auto, auto, 26px 26px, 26px 26px;
-  font-family: var(--font-sketch), "Comic Sans MS", system-ui, sans-serif;
-  font-size: 1.06rem;
 }
 
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] .font-display {
-  font-family: var(--font-sketch-display), var(--font-sketch), system-ui, sans-serif;
-  letter-spacing: 0;
-  font-weight: 700;
+/* dark: chalkboard — deep slate vignette + faint chalk grid */
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(820px 480px at 92% -10%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 60%),
+    radial-gradient(640px 400px at -8% 6%, color-mix(in oklab, var(--accent-3) 12%, transparent), transparent 58%),
+    radial-gradient(1200px 800px at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35) 100%),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: auto, auto, auto, 26px 26px, 26px 26px;
 }
 
-/* slightly inky, hand-pressed borders everywhere */
-[data-theme="light"] .card,
-[data-theme="light"] .card-flat,
-[data-theme="light"] .btn-primary,
-[data-theme="light"] .btn-ghost,
-[data-theme="light"] .input,
-[data-theme="light"] .chip,
-[data-theme="light"] .pill-mono {
+/* hand-pressed strokes — ink on paper, chalk on the board */
+.card, .card-flat, .btn-primary, .btn-ghost, .input, .chip, .pill-mono {
   border-width: 2px;
 }
 
-[data-theme="light"] .card,
-[data-theme="light"] .card-flat {
-  border-radius: var(--wobble);
-}
-[data-theme="light"] .card:nth-of-type(even),
-[data-theme="light"] .card-flat:nth-of-type(even) {
-  border-radius: var(--wobble-2);
-}
+.card, .card-flat { border-radius: var(--wobble); }
+.card:nth-of-type(even), .card-flat:nth-of-type(even) { border-radius: var(--wobble-2); }
 
-[data-theme="light"] .btn,
-[data-theme="light"] .btn-primary,
-[data-theme="light"] .btn-ghost {
-  border-radius: var(--wobble-pill);
-}
+.btn, .btn-primary, .btn-ghost, .input { border-radius: var(--wobble-pill); }
+.input:focus { box-shadow: var(--shadow-sm); }
 
-[data-theme="light"] .input {
-  border-radius: var(--wobble-pill);
-}
-[data-theme="light"] .input:focus {
-  box-shadow: var(--shadow-sm);
-}
-
-[data-theme="light"] .chip,
-[data-theme="light"] .pill-mono {
-  border-radius: 16px 6px 16px 6px / 6px 16px 6px 16px;
-}
+.chip, .pill-mono { border-radius: 16px 6px 16px 6px / 6px 16px 6px 16px; }
 
 /* round controls (theme/sound toggles, avatars) get a hand-circled look */
-[data-theme="light"] .rounded-full {
-  border-radius: 48% 52% 50% 50% / 50% 48% 52% 50%;
-}
+.rounded-full { border-radius: 48% 52% 50% 50% / 50% 48% 52% 50%; }
 
-/* a doodled underline under section headings */
-[data-theme="light"] .sketch-underline {
-  position: relative;
-  display: inline-block;
-}
-[data-theme="light"] .sketch-underline::after {
+/* a doodled underline under section headings — tints to each theme's accent */
+.sketch-underline { position: relative; display: inline-block; }
+.sketch-underline::after {
   content: "";
   position: absolute;
   left: -2%;
   right: -2%;
   bottom: -0.32em;
   height: 0.34em;
-  background: no-repeat center/100% 100%
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7 C 22 2, 38 10, 60 6 S 100 2, 118 6' fill='none' stroke='%235b34ef' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
-  opacity: 0.85;
+  background-color: var(--accent);
+  opacity: 0.9;
   pointer-events: none;
+  -webkit-mask: no-repeat center/100% 100%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7 C 22 2, 38 10, 60 6 S 100 2, 118 6' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask: no-repeat center/100% 100%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7 C 22 2, 38 10, 60 6 S 100 2, 118 6' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 @media (prefers-reduced-motion: reduce) {

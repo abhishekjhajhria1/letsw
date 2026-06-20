@@ -186,7 +186,7 @@ export default function NewSeasonForm({ connections }: { connections: Connection
                 setTitle(s);
                 playSound("pop");
               }}
-              className="chip transition hover:border-[var(--accent)]"
+              className="chip transition hover:border-accent"
               style={{ cursor: "pointer" }}
             >
               {s}
@@ -195,7 +195,7 @@ export default function NewSeasonForm({ connections }: { connections: Connection
           <button
             type="button"
             onClick={reshuffle}
-            className="chip transition hover:border-[var(--accent)]"
+            className="chip transition hover:border-accent"
             style={{ cursor: "pointer" }}
             aria-label="Shuffle suggestions"
           >

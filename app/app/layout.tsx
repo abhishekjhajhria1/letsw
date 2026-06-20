@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <NavLink href="/app/crew">Crew</NavLink>
               <NavLink href="/app/invite">Invites</NavLink>
             </div>
-            <Link href="/app/settings" className="mx-1 hidden rounded-lg px-2 py-2 font-medium transition hover:bg-[var(--surface-2)] sm:inline" style={{ color: "var(--muted)" }}>
+            <Link href="/app/settings" className="mx-1 hidden rounded-lg px-2 py-2 font-medium transition hover:bg-surface-2 sm:inline" style={{ color: "var(--muted)" }}>
               @{me.username}
             </Link>
             <NotificationBell initial={unread} />
@@ -50,7 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="rounded-lg px-3 py-2 font-medium transition hover:bg-[var(--surface-2)]">
+    <Link href={href} className="rounded-lg px-3 py-2 font-medium transition hover:bg-surface-2">
       {children}
     </Link>
   );

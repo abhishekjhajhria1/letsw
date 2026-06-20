@@ -136,7 +136,7 @@ export default async function Dashboard() {
                 (c) => c.authorId === partner.id && c.day === today && !c.verifiedById
               );
               return (
-                <Link key={s.id} href={`/app/p/${s.id}`} className="card transition hover:border-[var(--accent)]">
+                <Link key={s.id} href={`/app/p/${s.id}`} className="card transition hover:border-accent">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-bold">{s.title}</h3>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { checkInAction, startFocusAction, endFocusAction } from "@/app/actions";
+import { checkInAction, startFocusAction, endFocusAction, completeFocusAction } from "@/app/actions";
 import { playSound } from "@/lib/sound";
 
 type Season = { id: string; title: string };
@@ -35,24 +35,41 @@ function beep() {
   }
 }
 
+// short, daily, winnable — 30 min up to a 4-hour deep block
 const PRESETS = [
-  { label: "Pomodoro", min: 25 },
-  { label: "Short", min: 5 },
-  { label: "Long", min: 15 },
-  { label: "Deep", min: 50 },
+  { label: "30 min", min: 30 },
+  { label: "45 min", min: 45 },
+  { label: "1 hr", min: 60 },
+  { label: "1.5 hr", min: 90 },
+  { label: "2 hr", min: 120 },
+  { label: "3 hr", min: 180 },
+  { label: "4 hr", min: 240 },
 ];
+const MIN_MINUTES = 30;
+const MAX_MINUTES = 240;
 
-export default function FocusTimer({ seasons }: { seasons: Season[] }) {
+export default function FocusTimer({ seasons, initialStreak = 0 }: { seasons: Season[]; initialStreak?: number }) {
   const [mode, setMode] = useState<"timer" | "stopwatch">("timer");
   const [running, setRunning] = useState(false);
 
   // stopwatch
   const [swElapsed, setSwElapsed] = useState(0);
 
-  // countdown
-  const [total, setTotal] = useState(25 * 60);
-  const [remaining, setRemaining] = useState(25 * 60);
+  // countdown — defaults to the smallest daily session
+  const [total, setTotal] = useState(MIN_MINUTES * 60);
+  const [remaining, setRemaining] = useState(MIN_MINUTES * 60);
   const [done, setDone] = useState(false);
+
+  // daily session streak (advances when a timed session completes)
+  const [streak, setStreak] = useState(initialStreak);
+  const [showWellness, setShowWellness] = useState(false);
+
+  // random matchmaking (co-focus with a crew / friend-of-friend who's online)
+  const [matchPhase, setMatchPhase] = useState<"idle" | "confirm" | "searching" | "matched">("idle");
+  const [matchPartner, setMatchPartner] = useState<string | null>(null);
+  const [matchNote, setMatchNote] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollDeadline = useRef(0);
 
   // co-focus session (notifies a partner you're focusing)
   const focusIdRef = useRef<string | null>(null);
@@ -72,7 +89,7 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
             setDone(true);
             beep();
             playSound("achievement");
-            stopFocus();
+            completeNow();
             return 0;
           }
           return r - 1;
@@ -83,6 +100,9 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
       if (tick.current) clearInterval(tick.current);
     };
   }, [running, mode]);
+
+  // stop polling matchmaking if the page unmounts mid-search
+  useEffect(() => () => stopPolling(), []);
 
   const focusedSeconds = mode === "stopwatch" ? swElapsed : total - remaining;
   const display = mode === "stopwatch" ? swElapsed : remaining;
@@ -99,6 +119,85 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
       focusIdRef.current = null;
     }
   }
+  // ran to completion: bank the session, advance the streak, prompt wellness
+  async function completeNow() {
+    const id = focusIdRef.current;
+    focusIdRef.current = null;
+    try {
+      const res = await completeFocusAction(id ?? "");
+      if (res) setStreak(res.streak);
+    } catch {
+      /* streak update is best-effort */
+    }
+    setShowWellness(true);
+  }
+
+  // ---- random matchmaking ----
+  function stopPolling() {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }
+  function onMatched(d: { partner?: string | null; minutes: number; focusSessionId?: string | null }) {
+    stopPolling();
+    setTotal(d.minutes * 60);
+    setRemaining(d.minutes * 60);
+    setDone(false);
+    setShowWellness(false);
+    focusIdRef.current = d.focusSessionId ?? null; // session already created server-side
+    setMatchPartner(d.partner ?? null);
+    setMatchPhase("matched");
+    playSound("achievement");
+    setRunning(true); // begins the countdown; startFocus is skipped (id already set)
+  }
+  function startPolling() {
+    stopPolling();
+    pollDeadline.current = Date.now() + 95000;
+    pollRef.current = setInterval(async () => {
+      if (Date.now() > pollDeadline.current) {
+        stopPolling();
+        try { await fetch("/api/match", { method: "DELETE" }); } catch {}
+        setMatchPhase("idle");
+        setMatchNote("No one from your crew is free right now — try again, or start solo.");
+        return;
+      }
+      try {
+        const r = await fetch("/api/match");
+        const d = await r.json();
+        if (d.status === "matched") onMatched(d);
+        else if (d.status === "none") {
+          stopPolling();
+          setMatchPhase("idle");
+          setMatchNote("That match expired — give it another go.");
+        }
+      } catch {
+        /* keep polling */
+      }
+    }, 3000);
+  }
+  async function joinMatch() {
+    setMatchNote("");
+    setMatchPhase("searching");
+    try {
+      const r = await fetch("/api/match", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ minutes: Math.round(total / 60) }),
+      });
+      const d = await r.json();
+      if (d.status === "matched") onMatched(d);
+      else startPolling();
+    } catch {
+      setMatchPhase("idle");
+      setMatchNote("Couldn't reach matchmaking — try again.");
+    }
+  }
+  async function cancelMatch() {
+    stopPolling();
+    try { await fetch("/api/match", { method: "DELETE" }); } catch {}
+    setMatchPhase("idle");
+  }
   async function toggleRun() {
     const next = !running;
     setRunning(next);
@@ -108,19 +207,47 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
   function applyPreset(min: number) {
     setRunning(false);
     setDone(false);
+    setShowWellness(false);
     setTotal(min * 60);
     setRemaining(min * 60);
   }
   function resetAll() {
     setRunning(false);
     setDone(false);
+    setShowWellness(false);
     stopFocus();
+    stopPolling();
+    setMatchPhase("idle");
+    setMatchPartner(null);
     if (mode === "stopwatch") setSwElapsed(0);
     else setRemaining(total);
   }
 
   return (
     <div className="space-y-6">
+      {/* daily session streak */}
+      <div className="flex items-center justify-between">
+        <span className="chip" style={{ color: "var(--accent-2)", borderColor: "var(--accent-2)" }}>
+          🔥 {streak}-day session streak
+        </span>
+        <span className="text-sm" style={{ color: "var(--muted)" }}>
+          Finish a session daily to keep it
+        </span>
+      </div>
+
+      {matchPhase === "matched" && matchPartner && (
+        <div
+          className="card-flat flex items-center gap-2 pop-in"
+          style={{ borderColor: "var(--accent-3)" }}
+        >
+          <span className="text-lg">🎲</span>
+          <p className="text-sm">
+            Co-focusing with <span className="font-semibold">@{matchPartner}</span> — finish the
+            session together. 💪
+          </p>
+        </div>
+      )}
+
       {/* mode switch */}
       <div className="flex gap-2">
         {(["timer", "stopwatch"] as const).map((m) => (
@@ -176,7 +303,23 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
           </div>
         )}
 
-        {done && <p className="mb-4 font-semibold" style={{ color: "var(--accent-2)" }}>Session complete — nice work. 🎉</p>}
+        {done && (
+          <div className="mb-5 w-full max-w-sm space-y-2 text-center pop-in">
+            <p className="font-semibold" style={{ color: "var(--accent-2)" }}>
+              Session complete — streak now 🔥 {streak}. 🎉
+            </p>
+            {showWellness && (
+              <div
+                className="card-flat flex items-center justify-center gap-3 text-sm"
+                style={{ borderColor: "var(--accent-3)" }}
+              >
+                <span>💧 Drink some water</span>
+                <span style={{ color: "var(--muted)" }}>·</span>
+                <span>🚶 Move a little</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {seasons.length > 0 && (
           <div className="mb-4 flex items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
@@ -202,17 +345,35 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
         </div>
 
         {mode === "timer" && (
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { setMatchNote(""); setMatchPhase("confirm"); }}
+              className="btn btn-ghost text-sm"
+              disabled={running}
+              title="Pair up with someone online from your crew"
+            >
+              🎲 Match me with someone online
+            </button>
+            {matchNote && (
+              <p className="max-w-xs text-center text-xs" style={{ color: "var(--muted)" }}>{matchNote}</p>
+            )}
+          </div>
+        )}
+
+        {mode === "timer" && (
           <div className="mt-5 flex items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
             <span>Custom:</span>
             <input
               type="number"
-              min={1}
-              max={240}
+              min={MIN_MINUTES}
+              max={MAX_MINUTES}
+              step={5}
               className="input w-20 py-1.5 text-center"
               value={Math.round(total / 60)}
-              onChange={(e) => applyPreset(Math.max(1, Math.min(240, Number(e.target.value) || 1)))}
+              onChange={(e) => applyPreset(Math.max(MIN_MINUTES, Math.min(MAX_MINUTES, Number(e.target.value) || MIN_MINUTES)))}
             />
-            <span>min</span>
+            <span>min (30–240)</span>
           </div>
         )}
       </div>
@@ -245,6 +406,50 @@ export default function FocusTimer({ seasons }: { seasons: Season[] }) {
         <p className="text-center text-sm" style={{ color: "var(--muted)" }}>
           Start an active session to log your focus time as check-ins.
         </p>
+      )}
+
+      {/* random match popup — reminds you to set the time, then finds a partner */}
+      {(matchPhase === "confirm" || matchPhase === "searching") && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+        >
+          <div className="card w-full max-w-sm text-center pop-in">
+            {matchPhase === "confirm" ? (
+              <>
+                <div className="text-4xl">🎲</div>
+                <h3 className="mt-2 text-lg font-bold">Find a focus partner</h3>
+                <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+                  We&apos;ll pair you with someone online from your crew or friends-of-friends for a{" "}
+                  <span className="font-semibold" style={{ color: "var(--foreground)" }}>
+                    {Math.round(total / 60)}-minute
+                  </span>{" "}
+                  session. Set your time first — if that&apos;s not right, change it above, then come back.
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <button onClick={() => setMatchPhase("idle")} className="btn btn-ghost flex-1">
+                    Change time
+                  </button>
+                  <button onClick={joinMatch} className="btn btn-primary flex-1">
+                    Find a partner →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-4xl animate-float">🔍</div>
+                <h3 className="mt-2 text-lg font-bold">Looking for someone…</h3>
+                <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+                  Matching you for a {Math.round(total / 60)}-minute session with your crew &amp;
+                  friends-of-friends who are online right now.
+                </p>
+                <button onClick={cancelMatch} className="btn btn-ghost mt-5 w-full">
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

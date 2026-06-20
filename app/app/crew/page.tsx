@@ -11,7 +11,7 @@ export default async function CrewPage() {
 
   const [board, betterCount, myCrew] = await Promise.all([
     getLeaderboard(),
-    prisma.user.count({ where: { checkInCount: { gt: me.checkInCount } } }),
+    prisma.user.count({ where: { checkInCount: { gt: me.checkInCount }, statsPublic: true } }),
     prisma.user.findMany({
       where: { invitedById: me.id },
       orderBy: [{ streakCount: "desc" }, { checkInCount: "desc" }],
@@ -24,6 +24,9 @@ export default async function CrewPage() {
         lastCheckInDay: true,
         lastSeenAt: true,
         crewCount: true,
+        sessionStreak: true,
+        lastSessionDay: true,
+        statsPublic: true,
       },
     }),
   ]);
@@ -58,23 +61,37 @@ export default async function CrewPage() {
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {myCrew.map((r) => (
-              <div key={r.id} className="card">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    <OnlineDot online={isOnline(r.lastSeenAt)} size={8} />
-                    @{r.username}
-                  </span>
-                  <span className="chip" style={{ color: "var(--accent-2)" }}>
-                    🔥 {liveStreak(r.streakCount, r.lastCheckInDay)}d
-                  </span>
+            {myCrew.map((r) => {
+              const hidden = !r.statsPublic;
+              return (
+                <div key={r.id} className="card">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      {!hidden && <OnlineDot online={isOnline(r.lastSeenAt)} size={8} />}
+                      @{r.username}
+                    </span>
+                    {hidden ? (
+                      <span className="chip" style={{ color: "var(--muted)" }}>🔒 private</span>
+                    ) : (
+                      <span className="chip" style={{ color: "var(--accent-2)" }}>
+                        🔥 {liveStreak(r.streakCount, r.lastCheckInDay)}d
+                      </span>
+                    )}
+                  </div>
+                  {hidden ? (
+                    <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
+                      Keeps their stats private.
+                    </p>
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-4 text-sm" style={{ color: "var(--muted)" }}>
+                      <span>{r.checkInCount} check-ins</span>
+                      <span>🎯 {liveStreak(r.sessionStreak, r.lastSessionDay)}d sessions</span>
+                      <span>{r.crewCount} in their crew</span>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-3 flex gap-4 text-sm" style={{ color: "var(--muted)" }}>
-                  <span>{r.checkInCount} check-ins</span>
-                  <span>{r.crewCount} in their crew</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

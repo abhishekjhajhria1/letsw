@@ -91,44 +91,39 @@ export default function NewSeasonForm({ connections }: { connections: Connection
         <label className="label">Partner</label>
         {hasConnections && !manual && (
           <>
-            <div className="mt-1 max-h-64 space-y-2 overflow-y-auto pr-1">
-              {people.map((c) => {
-                const selected = c.username === partner;
-                const blocked = c.hasActive || c.pending;
-                return (
-                  <button
-                    type="button"
-                    key={c.id}
-                    disabled={blocked}
-                    onClick={() => {
-                      setPartner(c.username);
-                      playSound("pop");
-                    }}
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition"
-                    style={{
-                      borderColor: selected ? "var(--accent)" : "var(--border)",
-                      background: selected ? "rgba(124,92,255,0.10)" : "var(--surface-2)",
-                      opacity: blocked ? 0.55 : 1,
-                      cursor: blocked ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <OnlineDot online={c.online} />
-                      <span>
-                        <span className="font-semibold">@{c.username}</span>
-                        <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>
-                          {RELATION_LABEL[c.relation]}
-                          {c.streak > 0 && ` · 🔥 ${c.streak}d`}
-                        </span>
-                      </span>
-                    </span>
-                    <span className="text-xs" style={{ color: "var(--muted)" }}>
-                      {c.hasActive ? "in a session" : c.pending ? "requested" : selected ? "✓ selected" : "select"}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="relative">
+              <select
+                className="input appearance-none pr-10"
+                value={partner}
+                onChange={(e) => {
+                  setPartner(e.target.value);
+                  playSound("pop");
+                }}
+              >
+                <option value="">Choose a partner…</option>
+                {people.map((c) => {
+                  const blocked = c.hasActive || c.pending;
+                  return (
+                    <option key={c.id} value={c.username} disabled={blocked}>
+                      @{c.username} · {RELATION_LABEL[c.relation]}
+                      {c.online ? " · 🟢 online" : ""}
+                      {c.streak > 0 ? ` · 🔥${c.streak}d` : ""}
+                      {c.hasActive ? " · in a session" : c.pending ? " · requested" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }}>▾</span>
             </div>
+            {/* selected partner's live status, since the native dropdown can't show a dot */}
+            {partner && (() => {
+              const c = people.find((p) => p.username === partner);
+              return c ? (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs" style={{ color: "var(--muted)" }}>
+                  <OnlineDot online={c.online} /> @{c.username} is {c.online ? "online now" : "offline"}
+                </p>
+              ) : null;
+            })()}
             <button
               type="button"
               onClick={() => setManual(true)}

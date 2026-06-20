@@ -29,6 +29,16 @@ model User {
   longestStreak  Int     @default(0)
   lastCheckInDay String?
 
+  // daily focus-session streak (short timed sessions, 30m–4h)
+  sessionCount         Int     @default(0)
+  sessionStreak        Int     @default(0)
+  longestSessionStreak Int     @default(0)
+  lastSessionDay       String?
+
+  // privacy: when false, this user's stats/activity are hidden from
+  // crew & friends-of-friends and they drop off the public leaderboard
+  statsPublic Boolean @default(true)
+
   // daily reminder
   reminderEnabled Boolean @default(false)
   reminderTime    String? // HH:MM
@@ -185,6 +195,24 @@ model SeasonMessage {
   createdAt  DateTime @default(now())
 
   @@index([seasonId, createdAt])
+}
+
+// ephemeral matchmaking queue for "random" co-focus sessions. One waiting
+// ticket per user; rows expire fast (see the /api/match route) and carry no
+// relations so they can be pruned freely.
+model MatchTicket {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  username       String
+  minutes        Int
+  status         String   @default("waiting") // waiting | matched
+  partnerId      String?
+  partnerName    String?
+  focusSessionId String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
+
+  @@index([status, minutes])
 }
 
 model DailyIntention {

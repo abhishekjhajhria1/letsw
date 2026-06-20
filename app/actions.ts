@@ -388,6 +388,61 @@ export async function endFocusAction(id: string) {
   });
 }
 
+// A timed session ran to completion: close it, advance the daily session
+// streak (one per calendar day), and nudge the user to hydrate + move.
+export async function completeFocusAction(id: string) {
+  const me = await getCurrentUser();
+  if (!me) return null;
+
+  if (id) {
+    await prisma.focusSession.updateMany({
+      where: { id, userId: me.id, endedAt: null },
+      data: { endedAt: new Date() },
+    });
+  }
+
+  const today = dayKey();
+  const yesterday = dayKey(addDays(new Date(), -1));
+  const alreadyToday = me.lastSessionDay === today;
+
+  let streak: number;
+  if (alreadyToday) streak = me.sessionStreak;           // already counted today
+  else if (me.lastSessionDay === yesterday) streak = me.sessionStreak + 1;
+  else streak = 1;
+
+  await prisma.user.update({
+    where: { id: me.id },
+    data: {
+      sessionCount: { increment: 1 },
+      sessionStreak: streak,
+      longestSessionStreak: Math.max(me.longestSessionStreak, streak),
+      lastSessionDay: today,
+    },
+  });
+
+  // wellness reminder — lands in the bell + as a push
+  await notify(me.id, {
+    type: "wellness",
+    title: "Session done — hydrate & move 💧",
+    body: "Drink some water and stretch or walk for a minute before the next one.",
+    url: "/app/timer",
+  });
+
+  revalidatePath("/app/timer");
+  revalidatePath("/app/crew");
+  revalidatePath("/app");
+  return { streak, countedToday: !alreadyToday };
+}
+
+// Privacy toggle: hide/show this user's stats to crew & friends-of-friends.
+export async function setStatsPublicAction(isPublic: boolean) {
+  const me = await getCurrentUser();
+  if (!me) return;
+  await prisma.user.update({ where: { id: me.id }, data: { statsPublic: isPublic } });
+  revalidatePath("/app/settings");
+  revalidatePath("/app/crew");
+}
+
 // ---- daily intention ----
 
 export async function setIntentionAction(form: FormData) {

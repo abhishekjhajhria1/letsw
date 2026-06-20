@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { liveStreak } from "@/lib/dates";
 import FocusTimer from "./FocusTimer";
 import FocusSounds from "./FocusSounds";
 import FocusPresence from "@/app/ui/FocusPresence";
@@ -13,16 +14,19 @@ export default async function TimerPage() {
     orderBy: { startedAt: "desc" },
   });
 
+  const sessionStreak = liveStreak(me.sessionStreak, me.lastSessionDay);
+
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Focus</h1>
+        <h1 className="text-3xl font-bold">Focus session</h1>
         <p className="mt-1" style={{ color: "var(--muted)" }}>
-          Run a timer or stopwatch, then log the session straight to a partner.
+          Pick a short block (30 min–4 hr) and finish it. Show up daily to build
+          your streak — then hydrate and move before the next one.
         </p>
       </div>
       <FocusPresence />
-      <FocusTimer seasons={seasons} />
+      <FocusTimer seasons={seasons} initialStreak={sessionStreak} />
       <FocusSounds />
     </div>
   );

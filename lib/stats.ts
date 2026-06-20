@@ -19,6 +19,7 @@ export const getPublicStats = unstable_cache(
 export const getLeaderboard = unstable_cache(
   async () => {
     return prisma.user.findMany({
+      where: { statsPublic: true }, // private users opt out of the public board
       orderBy: [{ checkInCount: "desc" }, { longestStreak: "desc" }, { crewCount: "desc" }],
       take: 20,
       select: {
@@ -30,6 +31,8 @@ export const getLeaderboard = unstable_cache(
         lastCheckInDay: true,
         lastSeenAt: true,
         crewCount: true,
+        sessionStreak: true,
+        lastSessionDay: true,
       },
     });
   },

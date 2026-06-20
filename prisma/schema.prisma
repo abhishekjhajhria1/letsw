@@ -104,6 +104,10 @@ model PartnerSeason {
   checkIns      CheckIn[]
   focusSessions FocusSession[]
   intentions    DailyIntention[]
+
+  // every dashboard / partners / timer / season page filters by these
+  @@index([inviterId])
+  @@index([inviteeId])
 }
 
 model CheckIn {

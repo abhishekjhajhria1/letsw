@@ -1,6 +1,10 @@
 // offline-shell service worker
-const CACHE = "lwts-v2";
-const SHELL = ["/", "/login", "/offline.html", "/icon.svg", "/manifest.webmanifest"];
+// NOTE: only ever cache static, non-personalized assets here. HTML pages are
+// personalized by the session cookie (logged-in vs logged-out, redirects), so
+// they must NEVER be cache-first — doing so serves a stale logged-out page and
+// makes users look perpetually signed out. Bump CACHE to purge old caches.
+const CACHE = "lwts-v3";
+const SHELL = ["/offline.html", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -21,13 +25,17 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // app pages: network only, offline fallback
-  if (url.pathname.startsWith("/app")) {
+  // API + auth data: never cache — let the network handle it.
+  if (url.pathname.startsWith("/api/")) return;
+
+  // Page navigations (any HTML document): network-first, offline fallback.
+  // Never serve a cached page — it may be the wrong auth state.
+  if (req.mode === "navigate") {
     event.respondWith(fetch(req).catch(() => caches.match("/offline.html")));
     return;
   }
 
-  // everything else: cache-first
+  // Static assets only (scripts, styles, fonts, images): cache-first + refresh.
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)
@@ -35,7 +43,7 @@ self.addEventListener("fetch", (event) => {
           if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
           return res;
         })
-        .catch(() => cached || caches.match("/offline.html"));
+        .catch(() => cached);
       return cached || network;
     })
   );

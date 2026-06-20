@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
@@ -37,7 +38,10 @@ export async function destroySession() {
   jar.delete(COOKIE);
 }
 
-export async function getCurrentUser() {
+// cache() memoizes this for the lifetime of a single request, so the
+// session→user lookup runs once even though the layout AND the page both
+// call it (via requireUser). Halves the auth DB round-trips per navigation.
+export const getCurrentUser = cache(async () => {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
@@ -47,7 +51,7 @@ export async function getCurrentUser() {
   });
   if (!session || session.expiresAt < new Date()) return null;
   return session.user;
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

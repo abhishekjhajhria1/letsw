@@ -17,8 +17,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const unread = await prisma.notification.count({ where: { userId: me.id, read: false } });
 
   return (
-    <div className="flex min-h-full flex-1 flex-col lg:pr-60">
-      <header className="sticky top-0 z-10" style={{ background: "color-mix(in oklab, var(--background) 80%, transparent)", backdropFilter: "blur(10px)", borderBottom: "1.5px solid var(--border)" }}>
+    <div className="flex min-h-full flex-1 flex-col lg:pl-60">
+      <header className="sticky top-0 z-10" style={{ background: "var(--background)", borderBottom: "1.5px solid var(--border)" }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <Link href="/app" className="text-xl font-black tracking-tight">
             <span className="shimmer-text">LWTS</span>

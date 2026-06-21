@@ -20,8 +20,7 @@ export default function BottomNav() {
     <nav
       className="fixed inset-x-0 bottom-0 z-20 md:hidden"
       style={{
-        background: "color-mix(in oklab, var(--background) 92%, transparent)",
-        backdropFilter: "blur(10px)",
+        background: "var(--background)",
         borderTop: "1.5px solid var(--border)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}

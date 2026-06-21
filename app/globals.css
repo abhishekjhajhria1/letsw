@@ -178,13 +178,13 @@ h1, h2, h3, .font-display {
 .animate-wiggle:hover { animation: wiggle 0.5s ease-in-out; }
 .spin-in { animation: spin-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* static gradient text — was an infinite background-position animation that
+   repainted on every frame on every page (the header logo). Static = free. */
 .shimmer-text {
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 25%, var(--accent-3) 50%, var(--accent) 75%);
-  background-size: 200% auto;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 50%, var(--accent-3));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer 4s linear infinite;
 }
 
 /* ============================================================

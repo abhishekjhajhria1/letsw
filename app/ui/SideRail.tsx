@@ -20,11 +20,10 @@ export default function SideRail() {
 
   return (
     <aside
-      className="fixed right-0 top-0 z-20 hidden h-full w-60 flex-col lg:flex"
+      className="fixed left-0 top-0 z-20 hidden h-full w-60 flex-col lg:flex"
       style={{
-        background: "color-mix(in oklab, var(--background) 85%, transparent)",
-        backdropFilter: "blur(10px)",
-        borderLeft: "1.5px solid var(--border)",
+        background: "var(--surface)",
+        borderRight: "1.5px solid var(--border)",
       }}
     >
       <nav className="flex flex-col gap-1 p-3 pt-5">

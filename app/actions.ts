@@ -379,6 +379,30 @@ export async function startFocusAction(seasonId: string | null, minutes: number)
   return fs.id;
 }
 
+// Start a timed session (30m–4h). If a partner is chosen, ping them to co-work;
+// they're not required to join — it's a body-doubling nudge.
+export async function startCoFocusAction(partnerId: string | null, minutes: number) {
+  const me = await getCurrentUser();
+  if (!me) return null;
+  const mins = Math.max(30, Math.min(240, Math.round(minutes || 30)));
+  const endsAt = new Date(Date.now() + mins * 60000);
+
+  if (partnerId && partnerId !== me.id) {
+    const partner = await prisma.user.findUnique({ where: { id: partnerId }, select: { id: true } });
+    if (partner) {
+      await notify(partnerId, {
+        type: "focus",
+        title: `@${me.username} is focusing for ${mins} min`,
+        body: "Jump in and co-work — body doubling beats willpower.",
+        url: "/app/timer",
+      });
+    }
+  }
+
+  const fs = await prisma.focusSession.create({ data: { userId: me.id, endsAt } });
+  return fs.id;
+}
+
 export async function endFocusAction(id: string) {
   const me = await getCurrentUser();
   if (!me || !id) return;

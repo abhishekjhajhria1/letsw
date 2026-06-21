@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { checkInAction, startFocusAction, endFocusAction, completeFocusAction } from "@/app/actions";
+import { checkInAction, startCoFocusAction, endFocusAction, completeFocusAction } from "@/app/actions";
 import { playSound } from "@/lib/sound";
 
 type Season = { id: string; title: string };
+type CoPartner = { id: string; username: string; online: boolean };
 
 function fmt(totalSec: number) {
   const s = Math.max(0, Math.floor(totalSec));
@@ -48,7 +49,15 @@ const PRESETS = [
 const MIN_MINUTES = 30;
 const MAX_MINUTES = 240;
 
-export default function FocusTimer({ seasons, initialStreak = 0 }: { seasons: Season[]; initialStreak?: number }) {
+export default function FocusTimer({
+  seasons,
+  connections = [],
+  initialStreak = 0,
+}: {
+  seasons: Season[];
+  connections?: CoPartner[];
+  initialStreak?: number;
+}) {
   const [mode, setMode] = useState<"timer" | "stopwatch">("timer");
   const [running, setRunning] = useState(false);
 
@@ -71,9 +80,9 @@ export default function FocusTimer({ seasons, initialStreak = 0 }: { seasons: Se
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollDeadline = useRef(0);
 
-  // co-focus session (notifies a partner you're focusing)
+  // co-focus session (notifies a chosen connection you're focusing)
   const focusIdRef = useRef<string | null>(null);
-  const [focusSeasonId, setFocusSeasonId] = useState(seasons[0]?.id ?? "");
+  const [focusPartnerId, setFocusPartnerId] = useState("");
 
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -110,8 +119,8 @@ export default function FocusTimer({ seasons, initialStreak = 0 }: { seasons: Se
 
   async function startFocus() {
     if (focusIdRef.current) return;
-    const mins = mode === "timer" ? Math.max(1, Math.round(remaining / 60)) : 30;
-    focusIdRef.current = await startFocusAction(focusSeasonId || null, mins);
+    const mins = mode === "timer" ? Math.max(MIN_MINUTES, Math.round(remaining / 60)) : 30;
+    focusIdRef.current = await startCoFocusAction(focusPartnerId || null, mins);
   }
   function stopFocus() {
     if (focusIdRef.current) {
@@ -321,17 +330,20 @@ export default function FocusTimer({ seasons, initialStreak = 0 }: { seasons: Se
           </div>
         )}
 
-        {seasons.length > 0 && (
+        {mode === "timer" && (
           <div className="mb-4 flex items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
-            <span>Co-focus:</span>
+            <span>Focus with:</span>
             <select
-              value={focusSeasonId}
-              onChange={(e) => setFocusSeasonId(e.target.value)}
+              value={focusPartnerId}
+              onChange={(e) => setFocusPartnerId(e.target.value)}
               className="input w-auto py-1.5 text-sm"
+              disabled={running}
             >
-              <option value="">solo</option>
-              {seasons.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
+              <option value="">Solo</option>
+              {connections.map((c) => (
+                <option key={c.id} value={c.id}>
+                  @{c.username}{c.online ? " · 🟢 online" : ""}
+                </option>
               ))}
             </select>
           </div>

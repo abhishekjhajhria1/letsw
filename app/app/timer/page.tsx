@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { liveStreak } from "@/lib/dates";
+import { getConnections } from "@/lib/connections";
 import FocusTimer from "./FocusTimer";
 import FocusSounds from "./FocusSounds";
 import FocusPresence from "@/app/ui/FocusPresence";
@@ -8,11 +9,14 @@ import FocusPresence from "@/app/ui/FocusPresence";
 export default async function TimerPage() {
   const me = await requireUser();
 
-  const seasons = await prisma.partnerSeason.findMany({
-    where: { status: "active", OR: [{ inviterId: me.id }, { inviteeId: me.id }] },
-    select: { id: true, title: true },
-    orderBy: { startedAt: "desc" },
-  });
+  const [seasons, connections] = await Promise.all([
+    prisma.partnerSeason.findMany({
+      where: { status: "active", OR: [{ inviterId: me.id }, { inviteeId: me.id }] },
+      select: { id: true, title: true },
+      orderBy: { startedAt: "desc" },
+    }),
+    getConnections(me.id, me.invitedById),
+  ]);
 
   const sessionStreak = liveStreak(me.sessionStreak, me.lastSessionDay);
 
@@ -26,7 +30,7 @@ export default async function TimerPage() {
         </p>
       </div>
       <FocusPresence />
-      <FocusTimer seasons={seasons} initialStreak={sessionStreak} />
+      <FocusTimer seasons={seasons} connections={connections} initialStreak={sessionStreak} />
       <FocusSounds />
     </div>
   );

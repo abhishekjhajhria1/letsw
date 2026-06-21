@@ -108,6 +108,7 @@ export default async function CrewPage() {
                 <th className="px-4 py-3 font-medium">#</th>
                 <th className="px-4 py-3 font-medium">Member</th>
                 <th className="px-4 py-3 text-right font-medium">Streak</th>
+                <th className="px-4 py-3 text-right font-medium">Sessions</th>
                 <th className="px-4 py-3 text-right font-medium">Check-ins</th>
                 <th className="px-4 py-3 text-right font-medium">Crew</th>
               </tr>
@@ -126,6 +127,9 @@ export default async function CrewPage() {
                     </td>
                     <td className="px-4 py-3 text-right" style={{ color: "var(--accent-2)" }}>
                       🔥 {liveStreak(r.streakCount, r.lastCheckInDay)}
+                    </td>
+                    <td className="px-4 py-3 text-right" style={{ color: "var(--accent-3)" }}>
+                      🎯 {liveStreak(r.sessionStreak, r.lastSessionDay)}d
                     </td>
                     <td className="px-4 py-3 text-right">{r.checkInCount}</td>
                     <td className="px-4 py-3 text-right" style={{ color: "var(--muted)" }}>{r.crewCount}</td>

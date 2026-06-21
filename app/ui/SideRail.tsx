@@ -26,14 +26,14 @@ export default function SideRail() {
         borderRight: "1.5px solid var(--border)",
       }}
     >
-      <nav className="flex flex-col gap-1 p-3 pt-5">
+      <nav className="flex flex-col gap-2.5 p-3 pt-5">
         {NAV.map((t) => {
           const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
           return (
             <Link
               key={t.href}
               href={t.href}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 font-semibold transition hover:bg-surface-2"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold transition hover:bg-surface-2"
               style={
                 active
                   ? { background: "var(--accent)", color: "#fff", border: "1.5px solid var(--border)", boxShadow: "var(--shadow-sm)" }
